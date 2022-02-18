@@ -14,14 +14,19 @@ class Key:
 
     def insert(self, key, value):
         with open(self.STORE_KEYS_FILE, mode="a") as file:
-            file.write(f"{key} {value} \n")
-            logger.info(f"{key} set in db")
+            try:
+                file.write(f"{key} {value} \n")
+                logger.info(f"{key} set in db")
+                return True
+            except Exception:
+                logger.error(f"[ATTEMPT-FAIL] {key} could not be set in db")
+                return False
     
     def retrieve(self, key):
         if not self.use_btrees:
             with open(self.STORE_KEYS_FILE, mode="r") as file:
-                keys = file.readlines()
-                for line in keys:
+                data = file.readlines()
+                for line in data:
                     if line.startswith(key):
                         value = re.split(r'(\n|\s)', line)[2]
                         return value
@@ -29,9 +34,17 @@ class Key:
     def update(self, key, new_value):
         if not self.use_btrees:
             with open(self.STORE_KEYS_FILE) as file:
-                keys = file.readlines()
-                for line in keys:
+                data = file.readlines()
+                for line in data:
                     if line.startswith(key):
                         # line.replace
+                        pass
+
+    def delete(self, key):
+        if not self.use_btrees:
+            with open(self.STORE_KEYS_FILE) as file:
+                data = file.readlines()
+                for line in data:
+                    if line.startswith(key):
                         pass
 
