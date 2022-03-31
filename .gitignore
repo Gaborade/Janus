@@ -1,8 +1,8 @@
 __pycache__/
-venv/
+.db_logs/
+.curr_page.txt
 benchmark.py
-index.py
-store_keys.txt
-b-tree.py
-storemmap.txt
 exper.py
+venv/
+index.py
+b-tree.py

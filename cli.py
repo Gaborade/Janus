@@ -4,6 +4,7 @@ import sys
 DATABASE_COMMANDS = ("insert", "retrieve", "update", "delete")
 SYSTEM_EXITS = ("exit", "quit", "q", "Q", "QUIT", "Quit")
 
+
 def commands_cli():
     global DATABASE_COMMANDS
     global SYSTEM_EXITS
@@ -32,7 +33,9 @@ def commands_cli():
                         try:
                             sock.connect((HOST, PORT))
                         except ConnectionRefusedError:
-                            raise ConnectionRefusedError("Cannot connect to host server, perhaps start db server")
+                            raise ConnectionRefusedError(
+                                "Cannot connect to host server, perhaps start db server"
+                            )
                         sock.sendall(bytes(command + "\n", "utf-8"))
                         response = str(sock.recv(1024), "utf-8")
                         print(response)
@@ -40,4 +43,3 @@ def commands_cli():
 
 if __name__ == "__main__":
     commands_cli()
-
