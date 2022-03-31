@@ -11,6 +11,10 @@ import threading
 # if it is split into pages or create a new page
 # need to store current file in a file
 
+# store binary tree python object as a pickle and load into memory
+# hope overtime the object size doesn't get bigger than RAM
+# what of compression when stored pickled
+
 
 class Key:
     DB_DIRECTORY_PATH = os.path.join(os.path.dirname(__file__), ".db_logs")
@@ -33,7 +37,6 @@ class Key:
             self._write_current_page_name(self.current_page)
         else:
             self.current_page = self._read_current_page_name()
-            print("it read from curr file")
         if self.use_btrees:
             self.page_table = []
 
@@ -61,7 +64,7 @@ class Key:
             try:
                 file.write(f"{key} {value}\n")
                 logger.info(f"{key} set in db")
-                return True
+                return "0"
             except Exception:
                 logger.error(f"[ATTEMPT-FAIL] {key} could not be set in db")
                 return False
@@ -76,13 +79,18 @@ class Key:
                         return value
 
     def update(self, key, new_value):
-        self.delete(key)
-        self.insert(key, new_value)
+        if self.delete(key):
+            return self.insert(key, new_value)
 
     def delete(self, key):
-        with open("log_1.txt", mode="r") as file:
-            data = file.readlines()
-        with open("log_1.txt", mode="w") as rewrite_file:
-            for line in data:
-                if not line.startswith(key):
-                    rewrite_file.write(line)
+        try:
+            with open("log_1.txt", mode="r") as file:
+                data = file.readlines()
+            with open("log_1.txt", mode="w") as rewrite_file:
+                for line in data:
+                    if not line.startswith(key):
+                        rewrite_file.write(line)
+        except Exception:
+            logger.error(f"[ATTEMPT-FAIL] {key} could not be deleted")
+        else:
+            return "0"

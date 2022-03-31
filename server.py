@@ -44,11 +44,11 @@ class TCPServerHandler(socketserver.StreamRequestHandler):
         if hasattr(db, f"{db_command}") and callable(getattr(db, f"{db_command}")):
             command = getattr(db, f"{db_command}")
             if command_len == 3:
-                if command(key, value):
-                    self.wfile.write("0".encode())
+                response = command(key, value)
+                self.wfile.write(f"{response}".encode())
             elif command_len == 2:
-                get_value = command(key)
-                self.wfile.write(f"{get_value}".encode())
+                response = command(key)
+                self.wfile.write(f"{response}".encode())
 
 
 if __name__ == "__main__":
