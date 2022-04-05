@@ -3,12 +3,13 @@ import sys
 from log import logger
 from keys import Key
 import os
+import threading
 
 # experiment with tracemalloc
 import tracemalloc
 
 tracemalloc.start()
-
+db = Key()
 
 def memory_trace(limit=10):
     dash = "-" * 30
@@ -25,7 +26,7 @@ def memory_trace(limit=10):
 class TCPServerHandler(socketserver.StreamRequestHandler):
 
     def handle(self):
-        db = Key()
+        global db
         self.data = self.rfile.readline().strip().decode()
         logger.info(
             f"Message sent by key db cli client with address {self.client_address[0]}:{self.client_address[1]}"
@@ -44,15 +45,17 @@ class TCPServerHandler(socketserver.StreamRequestHandler):
         if hasattr(db, f"{db_command}") and callable(getattr(db, f"{db_command}")):
             command = getattr(db, f"{db_command}")
             if command_len == 3:
-                response = command(key, value)
-                self.wfile.write(f"{response}".encode())
+                query_response = command(key, value)
+                self.wfile.write(f"{query_response}".encode())
             elif command_len == 2:
-                response = command(key)
-                self.wfile.write(f"{response}".encode())
+                query_response = command(key)
+                self.wfile.write(f"{query_response}".encode())
 
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 4000
+    sort_keys_thread = threading.Thread(target=db.sort_keys, daemon=True)
+    sort_keys_thread.start()
     SERVER_IP_ADDR = "127.0.0.1" if HOST == "localhost" else HOST
     try:
         DEBUG = sys.argv[1] if sys.argv[1] == "debug" or sys.argv[1] == "-d" else False

@@ -2,6 +2,7 @@ import os
 import sys
 import sys
 import re
+import time
 from log import logger
 import threading
 
@@ -64,10 +65,11 @@ class Key:
             try:
                 file.write(f"{key} {value}\n")
                 logger.info(f"{key} set in db")
-                return "0"
             except Exception:
                 logger.error(f"[ATTEMPT-FAIL] {key} could not be set in db")
-                return False
+                return "1"
+            else:
+                return "0"
 
     def retrieve(self, key):
         if not self.use_btrees:
@@ -77,20 +79,54 @@ class Key:
                     if line.startswith(key):
                         key, value = line[:-1].split()
                         return value
+                return "1"
 
     def update(self, key, new_value):
-        if self.delete(key):
+        delete_query_response = self.delete(key)
+        if delete_query_response == "1":
+            return "1"
+        elif delete_query_response == "0":
             return self.insert(key, new_value)
 
     def delete(self, key):
+        db_file = open("log_1.txt", mode="r")
+        key_value_pairs = (line[:-1].split() for line in db_file)
+        keys = [element[0] for element in key_value_pairs]
+        if key not in keys:
+            db_file.close()
+            return "1"
+        data = db_file.readlines()
+        db_file.close()
         try:
-            with open("log_1.txt", mode="r") as file:
-                data = file.readlines()
-            with open("log_1.txt", mode="w") as rewrite_file:
+            with open("log_1.txt", mode="w") as rewrite_db_file:
                 for line in data:
                     if not line.startswith(key):
                         rewrite_file.write(line)
-        except Exception:
-            logger.error(f"[ATTEMPT-FAIL] {key} could not be deleted")
+        except Exception as e:
+            logger.error(f"[ATTEMPT-FAIL] {key} could not be deleted, reason: ", e)
+            return "1"
         else:
             return "0"
+
+    def sort_keys(self, time_interval=1800):
+        # sleep for 30 mins between sort rewrites
+        # 60 secs will be used for quick experiments
+        # only current page is sorted
+        # there should be a threadlock to ensure when this is
+        # being done no other operation by any method is also being done
+        while True:
+            current_file_size = os.stat(self.current_page).st_size
+            if current_file_size == 0:
+                time.sleep(time_interval)
+                continue
+            with open(self.current_page, mode="r") as db_file:
+                lines = db_file.readlines()
+                sorted_lines = sorted(lines)
+            if lines == sorted_lines:
+                time.sleep(time_interval)
+                continue
+            else:
+                with open(self.current_page, "w") as rewrite_db_file:
+                    print("rewriting db file again")
+                    for line in sorted_lines:
+                        rewrite_db_file.write(line)
