@@ -1,15 +1,17 @@
 import socketserver
 import sys
 from log import logger
-from keys import Key
+from engine import Janus
 import os
 import threading
+import logging
 
 # experiment with tracemalloc
 import tracemalloc
 
 tracemalloc.start()
-db = Key()
+db = Janus()
+
 
 def memory_trace(limit=10):
     dash = "-" * 30
@@ -24,12 +26,12 @@ def memory_trace(limit=10):
 
 
 class TCPServerHandler(socketserver.StreamRequestHandler):
-
     def handle(self):
         global db
         self.data = self.rfile.readline().strip().decode()
         logger.info(
-            f"Message sent by key db cli client with address {self.client_address[0]}:{self.client_address[1]}"
+            "Message sent by key db cli client with address "
+            f"{self.client_address[0]}:{self.client_address[1]}"
         )
         command_split = self.data.split()
 
@@ -41,7 +43,8 @@ class TCPServerHandler(socketserver.StreamRequestHandler):
             db_command, key = command_split
             command_len = 2
 
-        # callable to make sure no key db attributes which are not methods are called by getattr
+        # callable makes sure no key db attributes which are not
+        # methods are not called by getattr
         if hasattr(db, f"{db_command}") and callable(getattr(db, f"{db_command}")):
             command = getattr(db, f"{db_command}")
             if command_len == 3:
@@ -53,14 +56,17 @@ class TCPServerHandler(socketserver.StreamRequestHandler):
 
 
 if __name__ == "__main__":
-    HOST, PORT = "localhost", 4000
     sort_keys_thread = threading.Thread(target=db.sort_keys, daemon=True)
     sort_keys_thread.start()
+    HOST, PORT = "localhost", 4000
     SERVER_IP_ADDR = "127.0.0.1" if HOST == "localhost" else HOST
-    try:
-        DEBUG = sys.argv[1] if sys.argv[1] == "debug" or sys.argv[1] == "-d" else False
-    except IndexError:
+    if len(sys.argv) == 2:
+        DEBUG = True if sys.argv[1] == "--debug" or sys.argv[1] == "-d" else False
+    else:
         DEBUG = False
+
+    db.log_level = logging.DEBUG if DEBUG else logging.INFO
+
     with socketserver.TCPServer((HOST, PORT), TCPServerHandler) as server:
         try:
             if DEBUG:
@@ -69,12 +75,14 @@ if __name__ == "__main__":
                 logger.info("DEBUG=OFF")
             process_id = os.getpid()
             logger.info(f"Starting process id {process_id}")
-            logger.info(f"Key value db server starting")
+            logger.info(f"Janus server starting")
             logger.info(f"Server listening on address {SERVER_IP_ADDR}:{PORT}")
             server.serve_forever()
         except KeyboardInterrupt:
             logger.info(f"Closing process id {process_id}")
             logger.info(f"Key value db server shutting down")
+            # still doesn't solve socket bind problem
+            server.shutdown()
             if DEBUG:
                 memory_trace()
             sys.exit()

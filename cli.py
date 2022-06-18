@@ -1,8 +1,12 @@
 import socket
 import sys
+import os
 
 DATABASE_COMMANDS = ("insert", "retrieve", "update", "delete")
 SYSTEM_EXITS = ("exit", "quit", "q", "Q", "QUIT", "Quit")
+
+class JanusServerNotStartedError(ConnectionRefusedError):
+    pass
 
 
 def commands_cli():
@@ -12,7 +16,7 @@ def commands_cli():
     HOST, PORT = "localhost", 4000
 
     while True:
-        command = input("key_db_cli $  ").strip()
+        command = input("janus_cli $  ").strip()
         if command in SYSTEM_EXITS:
             sys.exit()
         else:
@@ -33,8 +37,10 @@ def commands_cli():
                         try:
                             sock.connect((HOST, PORT))
                         except ConnectionRefusedError:
-                            raise ConnectionRefusedError(
-                                "Cannot connect to host server, perhaps start db server"
+                            env_name = "python3" if os.name == "posix" else "python"
+                            raise JanusServerNotStartedError(
+                                "Cannot connect to janus server, start server "
+                                f"with {env_name} server.py command"
                             )
                         sock.sendall(bytes(command + "\n", "utf-8"))
                         response = str(sock.recv(1024), "utf-8")
@@ -42,4 +48,9 @@ def commands_cli():
 
 
 if __name__ == "__main__":
-    commands_cli()
+    try:
+        commands_cli()
+    except KeyboardInterrupt as e:
+        print("Cli abruptly stopped, reason: KeyboardInterrupt, ", e.__doc__)
+        sys.exit()
+
