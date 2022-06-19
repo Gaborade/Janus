@@ -83,7 +83,6 @@ class Janus:
                         b"value": bytes(value, encoding="utf-8"),
                     }
                 )
-                # file.write(f"{key} {value}\n")  # needs to be in bytes
                 self.log.info(f"{key} set in db")
 
             except Exception as e:

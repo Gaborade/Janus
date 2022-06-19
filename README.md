@@ -29,7 +29,7 @@ with the use of a simple command-line interface(cli)
 
 
 4. To perform CRUD operations:
-   ![Janus Cli](../imgs/screenshot.png)
+   ![Janus Cli](/imgs/screenshot.png)
 
 
 
