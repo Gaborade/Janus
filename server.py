@@ -30,7 +30,7 @@ class TCPServerHandler(socketserver.StreamRequestHandler):
         global db
         self.data = self.rfile.readline().strip().decode()
         logger.info(
-            "Message sent by key db cli client with address "
+            "Message sent by Janus cli client with address "
             f"{self.client_address[0]}:{self.client_address[1]}"
         )
         command_split = self.data.split()
@@ -80,7 +80,7 @@ if __name__ == "__main__":
             server.serve_forever()
         except KeyboardInterrupt:
             logger.info(f"Closing process id {process_id}")
-            logger.info(f"Key value db server shutting down")
+            logger.info(f"Janus server shutting down")
             # still doesn't solve socket bind problem
             server.shutdown()
             if DEBUG:

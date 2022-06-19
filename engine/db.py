@@ -85,6 +85,7 @@ class Janus:
                 )
                 # file.write(f"{key} {value}\n")  # needs to be in bytes
                 self.log.info(f"{key} set in db")
+
             except Exception as e:
                 if self._log_level_set_to_debug():
                     self.log.debug(
@@ -118,13 +119,16 @@ class Janus:
         db_file.close()
         key_value_pairs = (line[:-1].split() for line in data)
         keys = [element[0] for element in key_value_pairs]
+
         if key not in keys:
             return "1"
+
         try:
             with open(self.root_page, mode="wb") as rewrite_db_file:
                 for line in data:
                     if not line.startswith(key):
                         rewrite_db_file.write(bytes(line, encoding="utf-8"))
+
         except Exception as e:
             if self._log_level_set_to_debug():
                 self.log.debug(
